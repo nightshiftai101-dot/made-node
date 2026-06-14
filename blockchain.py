@@ -13,7 +13,7 @@ BLOCK_REWARD       = 5.0
 HALVING_INTERVAL   = 2_100_000      # blocks (~4 years at 60s/block)
 TARGET_BLOCK_TIME  = 300             # seconds
 DIFF_ADJUST_EVERY  = 10             # blocks (every ~50 min at 5 min target)             # blocks (fast adaptation for solo mining)
-INITIAL_DIFFICULTY = 20             # leading zero BITS (2^17 = 131072 expected hashes)
+INITIAL_DIFFICULTY = 26             # leading zero BITS (2^26 = ~67M expected hashes, ~2-5 min on avg CPU)
 MAX_SUPPLY         = 100_000_000.0
 MAX_TX_PER_BLOCK   = 100
 
