@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>M.A.D.E. Coin Node</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#f4c542;--gold2:#c88b1f;--bg:#050505;--panel:#111;--border:#222;--muted:#666;--red:#e05a5a;--green:#5ae0a0}
+body{background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;min-height:100vh}
+/* topbar */
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:2px solid var(--gold2);background:#0a0a0a}
+.logo{width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#111;flex-shrink:0}
+.topbar-title{font-weight:800;font-size:16px}.topbar-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.badge{margin-left:auto;background:#1a1a2e;color:var(--gold);border:1px solid var(--gold2);border-radius:4px;padding:3px 10px;font-size:11px;font-weight:700}
+.sdot{width:8px;height:8px;border-radius:50%;background:#333;display:inline-block;margin-right:6px}
+.sdot.on{background:var(--green);box-shadow:0 0 6px var(--green)}.sdot.off{background:var(--red)}
+/* layout */
+.main{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;max-width:1100px;margin:0 auto}
+@media(max-width:700px){.main{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
+/* cards */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px}
+/* ── SETUP SCREEN ── */
+#setup-screen{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.setup-logo{width:80px;height:80px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:36px;color:#111;margin:0 auto 24px}
+.setup-title{font-size:28px;font-weight:900;color:var(--gold);margin-bottom:8px}
+.setup-sub{font-size:15px;color:#aaa;margin-bottom:36px;max-width:380px;line-height:1.6}
+.setup-box{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:14px;padding:28px 32px;max-width:440px;width:100%;margin:0 auto}
+.setup-box-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.setup-box-desc{font-size:13px;color:#888;margin-bottom:24px;line-height:1.6}
+.btn-setup{width:100%;padding:14px;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;background:var(--gold);color:#111;font-family:inherit;transition:background .2s}
+.btn-setup:hover{background:#e0b33c}
+/* ── WALLET CARD ── */
+.wallet-card{background:linear-gradient(135deg,#0d0d0d 0%,#1a1500 100%);border:1px solid var(--gold2);border-radius:14px;padding:24px;position:relative;overflow:hidden}
+.wallet-card::before{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(244,197,66,.12) 0%,transparent 70%);pointer-events:none}
+.wh-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold2);margin-bottom:8px}
+.wh-balance{font-size:48px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:4px}
+.wh-ticker{font-size:14px;color:var(--muted);margin-bottom:22px}
+.addr-section{background:#0a0a0a;border:1px solid #2a2a2a;border-radius:10px;padding:14px 16px}
+.addr-section-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.addr-display{font-family:'Courier New',monospace;font-size:13px;color:#f0f0f0;word-break:break-all;line-height:1.5;margin-bottom:10px;background:#050505;padding:10px;border-radius:6px;border:1px solid #1a1a1a}
+.addr-btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn-sm{padding:6px 14px;border:1px solid var(--border);background:none;color:#aaa;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+.btn-sm.gold:hover{background:#e0b33c}
+.btn-sm.danger{border-color:#553333;color:#c08080}
+.btn-sm.danger:hover{border-color:var(--red);color:var(--red)}
+/* send */
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
+input[type=text],input[type=number]{width:100%;background:#0a0a0a;border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:7px;font-size:13px;outline:none;transition:border-color .2s;margin-bottom:10px}
+input:focus{border-color:var(--gold2)}
+.btn{width:100%;padding:11px;border:none;border-radius:7px;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-gold{background:var(--gold);color:#111}.btn-gold:hover{background:#e0b33c}
+.btn-gold:disabled{background:#555;color:#888;cursor:not-allowed}
+.msg{font-size:12px;margin-top:8px;padding:8px 12px;border-radius:6px;display:none}
+.msg.ok{background:rgba(90,224,160,.1);border:1px solid rgba(90,224,160,.3);color:var(--green);display:block}
+.msg.err{background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.3);color:var(--red);display:block}
+/* mining */
+.mining-toggle{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.mining-toggle-label{font-size:15px;font-weight:700}
+.toggle{position:relative;display:inline-block;width:52px;height:28px}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#333;border-radius:28px;cursor:pointer;transition:.3s}
+.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;bottom:3px;background:#888;border-radius:50%;transition:.3s}
+input:checked+.slider{background:var(--gold)}
+input:checked+.slider:before{transform:translateX(24px);background:#111}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#0a0a0a;border:1px solid var(--border);border-radius:8px;padding:12px}
+.stat-val{font-size:22px;font-weight:800;color:#fff}
+.stat-val.gold{color:var(--gold)}.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+.tx-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto}
+.tx-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#0a0a0a;border:1px solid var(--border);border-radius:8px}
+.tx-dir{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.tx-dir.in{background:rgba(90,224,160,.12);color:var(--green)}.tx-dir.out{background:rgba(224,90,90,.12);color:var(--red)}.tx-dir.mine{background:rgba(244,197,66,.12);color:var(--gold)}
+.tx-info{flex:1;overflow:hidden}
+.tx-addr{font-size:11px;font-family:monospace;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tx-type{font-size:11px;color:#aaa;font-weight:600}
+.tx-amt{font-weight:700;font-size:13px;white-space:nowrap}
+.tx-amt.in{color:var(--green)}.tx-amt.out{color:var(--red)}.tx-amt.mine{color:var(--gold)}
+.empty{text-align:center;color:var(--muted);padding:30px;font-size:13px}
+.node-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:500px){.node-grid{grid-template-columns:1fr 1fr}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0a0a0a}::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:200}
+.modal-overlay.open{display:flex}
+.modal{background:#111;border:1px solid #333;border-radius:14px;padding:28px;max-width:480px;width:calc(100% - 40px)}
+.modal h2{font-size:18px;color:var(--gold);margin-bottom:8px}
+.modal p{font-size:13px;color:#aaa;line-height:1.6;margin-bottom:16px}
+.modal-warn{background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.4);border-radius:8px;padding:12px 14px;font-size:12px;color:#e08080;margin-bottom:18px;line-height:1.6}
+.modal-key{background:#050505;border:1px solid #2a2a2a;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:var(--gold);word-break:break-all;line-height:1.6;margin-bottom:14px;cursor:pointer;transition:border-color .2s;min-height:44px;display:flex;align-items:center}
+.modal-key:hover{border-color:var(--gold2)}
+.modal-actions{display:flex;gap:10px;flex-wrap:wrap}
+.modal-chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#aaa;margin-bottom:16px;cursor:pointer}
+.modal-chk input{accent-color:var(--gold);width:15px;height:15px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">M</div>
+  <div>
+    <div class="topbar-title">M.A.D.E. Coin Node</div>
+    <div class="topbar-sub">Making A Daily Earning</div>
+  </div>
+  <div class="badge"><span class="sdot" id="dot"></span><span id="net-label">CONNECTING</span></div>
+</div>
+
+<!-- ── SETUP SCREEN (shown when no wallet exists) ── -->
+<div id="setup-screen" style="display:none">
+  <div class="setup-logo">M</div>
+  <div class="setup-title">Welcome to M.A.D.E. Coin</div>
+  <div class="setup-sub">You don't have a wallet yet. Create one to start mining and receiving MADE coins.</div>
+  <div class="setup-box">
+    <div class="setup-box-title">Create Your Wallet</div>
+    <div class="setup-box-desc">
+      A new wallet generates a unique address and private key.<br>
+      Your private key is <strong style="color:#f0f0f0">never shown automatically</strong> — you must request it to back it up.
+    </div>
+    <button class="btn-setup" onclick="createWallet()">Generate My Wallet</button>
+  </div>
+</div>
+
+<!-- ── MAIN DASHBOARD (hidden until wallet exists) ── -->
+<div id="dashboard" style="display:none">
+<div class="main">
+
+  <!-- Wallet Card -->
+  <div class="wallet-card full">
+    <div class="wh-label">Wallet Balance</div>
+    <div class="wh-balance" id="balance">—</div>
+    <div class="wh-ticker">MADE</div>
+    <div class="addr-section">
+      <div class="addr-section-label">Your Address — share this to receive MADE</div>
+      <div class="addr-display" id="addr-display">—</div>
+      <div class="addr-btns">
+        <button class="btn-sm gold" onclick="copyAddr()">📋 Copy Address</button>
+        <button class="btn-sm" onclick="openBackupModal()">🔑 Show Private Key</button>
+        <button class="btn-sm danger" onclick="openNewWalletModal()">⚠ New Wallet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send -->
+  <div class="card">
+    <div class="card-title">➤ Send MADE</div>
+    <label>Recipient Address</label>
+    <input type="text" id="to-addr" placeholder="MADExxxx…"/>
+    <label>Amount (MADE)</label>
+    <input type="number" id="send-amt" placeholder="0.00" step="0.01" min="0"/>
+    <button class="btn btn-gold" onclick="sendTx()">Send MADE</button>
+    <div class="msg" id="send-msg"></div>
+  </div>
+
+  <!-- Mining -->
+  <div class="card">
+    <div class="card-title">⛏️ Mining</div>
+    <div class="mining-toggle">
+      <div>
+        <div class="mining-toggle-label" id="mining-label">Mining Off</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Rewards go to your address</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="mine-toggle" onchange="toggleMining()"/><span class="slider"></span></label>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-val gold" id="blocks-mined">0</div><div class="stat-lbl">Blocks Mined</div></div>
+      <div class="stat"><div class="stat-val" id="hashrate">0 H/s</div><div class="stat-lbl">Hash Rate</div></div>
+      <div class="stat"><div class="stat-val gold" id="mined-bal">0</div><div class="stat-lbl">MADE Earned</div></div>
+      <div class="stat"><div class="stat-val" id="difficulty">—</div><div class="stat-lbl">Difficulty</div></div>
+    </div>
+  </div>
+
+  <!-- Transactions -->
+  <div class="card full">
+    <div class="card-title">📋 Recent Transactions</div>
+    <div class="tx-list" id="tx-list"><div class="empty">No transactions yet.</div></div>
+  </div>
+
+  <!-- Node Stats -->
+  <div class="card full">
+    <div class="card-title">🔗 Node Stats</div>
+    <div class="node-grid">
+      <div class="stat"><div class="stat-val" id="height">—</div><div class="stat-lbl">Block Height</div></div>
+      <div class="stat"><div class="stat-val" id="peers">—</div><div class="stat-lbl">Peers</div></div>
+      <div class="stat"><div class="stat-val" id="mempool">—</div><div class="stat-lbl">Mempool</div></div>
+      <div class="stat"><div class="stat-val" id="reward">—</div><div class="stat-lbl">Block Reward</div></div>
+      <div class="stat"><div class="stat-val" id="last-hash" style="font-size:12px;font-family:monospace">—</div><div class="stat-lbl">Last Hash</div></div>
+      <div class="stat"><div class="stat-val" id="version" style="font-size:13px">—</div><div class="stat-lbl">Version</div></div>
+    </div>
+  </div>
+
+</div>
+</div><!-- end #dashboard -->
+
+<!-- ── SHOW PRIVATE KEY MODAL ── -->
+<div class="modal-overlay" id="backup-modal">
+  <div class="modal">
+    <h2>🔑 Your Private Key</h2>
+    <p>This is the only key that controls your wallet. Store it somewhere safe — never share it with anyone.</p>
+    <div class="modal-warn">⚠️ M.A.D.E. Coin cannot recover lost keys. Losing this key means permanent loss of access.</div>
+    <div class="modal-key" id="privkey-display" onclick="copyPrivKey()" title="Click to copy">Loading…</div>
+    <div class="modal-actions">
+      <button class="btn-sm gold" onclick="copyPrivKey()">📋 Copy Key</button>
+      <button class="btn-sm" onclick="closeModal('backup-modal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── NEW WALLET MODAL ── -->
+<div class="modal-overlay" id="new-wallet-modal">
+  <div class="modal">
+    <h2>⚠ Generate New Wallet</h2>
+    <p>This creates a new address and private key. Your current wallet becomes inaccessible unless you backed up the private key.</p>
+    <div class="modal-warn">⚠️ This cannot be undone. Back up your current private key first.</div>
+    <label class="modal-chk">
+      <input type="checkbox" id="chk-confirm" onchange="updateGenBtn()"/>
+      I have backed up my private key (or I have no MADE to lose)
+    </label>
+    <div class="modal-actions">
+      <button class="btn-sm danger" id="btn-gen" onclick="doGenerate()" disabled style="opacity:.5">Generate New Wallet</button>
+      <button class="btn-sm" onclick="closeModal('new-wallet-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:7777';
+let myAddr = '';
+
+const $ = id => document.getElementById(id);
+
+function fmt(n){ return parseFloat(n||0).toLocaleString(undefined,{maximumFractionDigits:4}); }
+
+async function apiFetch(path, opts){
+  const r = await fetch(API+path, opts);
+  return r.json();
+}
+
+// ── Screen switch ─────────────────────────────────────────────────────────
+function showDashboard(){ $('setup-screen').style.display='none'; $('dashboard').style.display=''; }
+function showSetup(){ $('setup-screen').style.display='flex'; $('dashboard').style.display='none'; }
+
+// ── Create wallet (setup screen button) ──────────────────────────────────
+async function createWallet(){
+  const btn = document.querySelector('.btn-setup');
+  btn.textContent = 'Generating…'; btn.disabled = true;
+  try {
+    const data = await apiFetch('/api/wallet/new', {method:'POST'});
+    if(data.address){
+      myAddr = data.address;
+      $('addr-display').textContent = myAddr;
+      showDashboard();
+      refresh();
+    }
+  } catch(e){ btn.textContent='Error – try again'; btn.disabled=false; }
+}
+
+// ── Addr copy ─────────────────────────────────────────────────────────────
+function copyAddr(){
+  if(!myAddr) return;
+  navigator.clipboard.writeText(myAddr).then(()=>{
+    const b=document.querySelector('.btn-sm.gold');
+    const orig=b.textContent; b.textContent='✓ Copied!';
+    setTimeout(()=>b.textContent=orig,1500);
+  });
+}
+
+// ── Private key modal (only fetched on demand) ────────────────────────────
+async function openBackupModal(){
+  $('privkey-display').textContent='Loading…';
+  $('backup-modal').classList.add('open');
+  try {
+    const data = await apiFetch('/api/wallet/export');
+    $('privkey-display').textContent = data.private_key_wif || 'Error loading key';
+  } catch(e){ $('privkey-display').textContent='Error – is the node running?'; }
+}
+
+function copyPrivKey(){
+  const txt = $('privkey-display').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    $('privkey-display').style.color='#5ae0a0';
+    setTimeout(()=>$('privkey-display').style.color='',1500);
+  });
+}
+
+// ── New wallet modal ──────────────────────────────────────────────────────
+function openNewWalletModal(){
+  $('chk-confirm').checked=false; $('btn-gen').disabled=true; $('btn-gen').style.opacity='.5';
+  $('new-wallet-modal').classList.add('open');
+}
+function updateGenBtn(){ const ok=$('chk-confirm').checked; $('btn-gen').disabled=!ok; $('btn-gen').style.opacity=ok?'1':'.5'; }
+
+async function doGenerate(){
+  try {
+    const data = await apiFetch('/api/wallet/new',{method:'POST'});
+    closeModal('new-wallet-modal');
+    if(data.address){ myAddr=data.address; $('addr-display').textContent=myAddr; refresh(); }
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+function closeModal(id){ $(id).classList.remove('open'); }
+
+// ── Send ──────────────────────────────────────────────────────────────────
+async function sendTx(){
+  const to=$('to-addr').value.trim(), amt=parseFloat($('send-amt').value), msg=$('send-msg');
+  msg.className='msg';
+  if(!to||!amt||amt<=0){msg.textContent='Enter a valid address and amount.';msg.className='msg err';return;}
+  try{
+    const r=await apiFetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipient:to,amount:amt})});
+    if(r.success){msg.textContent='✓ Sent! TX: '+r.tx_id.slice(0,20)+'…';msg.className='msg ok';$('to-addr').value='';$('send-amt').value='';}
+    else{msg.textContent='✗ '+r.error;msg.className='msg err';}
+  }catch(e){msg.textContent='Node not responding.';msg.className='msg err';}
+}
+
+async function toggleMining(){
+  const on=$('mine-toggle').checked;
+  const r=await apiFetch('/api/mining/'+(on?'start':'stop'),{method:'POST'}).catch(()=>({}));
+  if(r.error&&on){ alert(r.error); $('mine-toggle').checked=false; }
+}
+
+// ── Main refresh loop ─────────────────────────────────────────────────────
+async function refresh(){
+  try{
+    const [wallet,info,mining]=await Promise.all([
+      apiFetch('/api/wallet'), apiFetch('/api/info'), apiFetch('/api/mining/status')
+    ]);
+
+    $('dot').className='sdot on'; $('net-label').textContent='TESTNET';
+
+    if(!wallet.exists){ showSetup(); return; }
+    showDashboard();
+
+    myAddr=wallet.address;
+    $('addr-display').textContent=myAddr;
+    $('balance').textContent=fmt(wallet.balance);
+
+    const tog=$('mine-toggle');
+    if(tog.checked!==mining.running) tog.checked=mining.running;
+    $('mining-label').textContent=mining.running?'Mining Active':'Mining Off';
+    $('blocks-mined').textContent=mining.blocks_mined||0;
+    $('hashrate').textContent=mining.hashrate||'0 H/s';
+    $('mined-bal').textContent=fmt((mining.blocks_mined||0)*(info.block_reward||5));
+    $('height').textContent=info.height;
+    $('peers').textContent=info.peers;
+    $('mempool').textContent=info.mempool_size;
+    $('reward').textContent=fmt(info.block_reward)+' MADE';
+    $('last-hash').textContent=(info.last_hash||'').slice(0,16)+'…';
+    $('version').textContent=info.version;
+    $('difficulty').textContent=info.difficulty;
+
+    if(myAddr){
+      const addrData=await apiFetch('/api/address/'+myAddr).catch(()=>null);
+      if(addrData&&addrData.transactions&&addrData.transactions.length>0){
+        $('tx-list').innerHTML=addrData.transactions.slice(0,20).map(tx=>{
+          const isReward=tx.sender==='COINBASE', isOut=tx.sender===myAddr&&!isReward;
+          const cls=isReward?'mine':isOut?'out':'in', icon=isReward?'⛏':isOut?'↑':'↓';
+          const label=isReward?'Mining Reward':isOut?'Sent to '+tx.recipient.slice(0,16)+'…':'Received from '+tx.sender.slice(0,16)+'…';
+          const sign=isOut?'-':'+';
+          return `<div class="tx-item"><div class="tx-dir ${cls}">${icon}</div><div class="tx-info"><div class="tx-type">${label}</div><div class="tx-addr">Block #${tx.block_height||'pending'} · ${new Date(tx.timestamp*1000).toLocaleTimeString()}</div></div><div class="tx-amt ${cls}">${sign}${fmt(tx.amount)} MADE</div></div>`;
+        }).join('');
+      }
+    }
+  }catch(e){
+    $('dot').className='sdot off'; $('net-label').textContent='NODE OFFLINE';
+  }
+}
+
+refresh();
+setInterval(refresh,3000);
+</script>
+</body>
+</html>
