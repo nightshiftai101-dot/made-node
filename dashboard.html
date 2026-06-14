@@ -96,6 +96,11 @@ input:checked+.slider:before{transform:translateX(24px);background:#111}
 .modal-actions{display:flex;gap:10px;flex-wrap:wrap}
 .modal-chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#aaa;margin-bottom:16px;cursor:pointer}
 .modal-chk input{accent-color:var(--gold);width:15px;height:15px;cursor:pointer}
+/* ── COPY ADDR MODAL ── */
+.addr-rules{list-style:none;padding:0;margin-bottom:16px}
+.addr-rules li{display:flex;gap:10px;font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.5}
+.addr-rules li span.icon{font-size:16px;flex-shrink:0}
+.addr-masked{font-family:'Courier New',monospace;font-size:12px;color:var(--muted);background:#050505;padding:8px 10px;border-radius:6px;border:1px solid #1a1a1a;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -135,9 +140,9 @@ input:checked+.slider:before{transform:translateX(24px);background:#111}
     <div class="wh-ticker">MADE</div>
     <div class="addr-section">
       <div class="addr-section-label">Your Address — share this to receive MADE</div>
-      <div class="addr-display" id="addr-display">—</div>
+      <div class="addr-display addr-masked" id="addr-display">—</div>
       <div class="addr-btns">
-        <button class="btn-sm gold" onclick="copyAddr()">📋 Copy Address</button>
+        <button class="btn-sm gold" onclick="openCopyAddrModal()">📋 Copy Address</button>
         <button class="btn-sm" onclick="openBackupModal()">🔑 Show Private Key</button>
         <button class="btn-sm danger" onclick="openNewWalletModal()">⚠ New Wallet</button>
       </div>
@@ -195,6 +200,26 @@ input:checked+.slider:before{transform:translateX(24px);background:#111}
 </div>
 </div><!-- end #dashboard -->
 
+<!-- ── COPY ADDRESS MODAL ── -->
+<div class="modal-overlay" id="copy-addr-modal">
+  <div class="modal">
+    <h2>📋 Copy Your Wallet Address</h2>
+    <p>Your wallet address is like an account number — safe to give to others so they can send you MADE.</p>
+    <ul class="addr-rules">
+      <li><span class="icon">✅</span><span>Share your <strong style="color:#f0f0f0">address</strong> freely — it's public. Anyone can send MADE to it.</span></li>
+      <li><span class="icon">🔒</span><span>Never share your <strong style="color:#f0f0f0">Private Key</strong> — that controls your wallet. Treat it like a password.</span></li>
+      <li><span class="icon">💾</span><span>Back up your Private Key somewhere safe (use "Show Private Key"). Losing it means losing your MADE permanently.</span></li>
+      <li><span class="icon">🚫</span><span>M.A.D.E. Coin cannot recover lost wallets or keys. There is no support reset.</span></li>
+    </ul>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Your Address</div>
+    <div class="modal-key" id="copy-addr-display" onclick="doCopyAddr()" title="Click to copy" style="font-size:12px">—</div>
+    <div class="modal-actions">
+      <button class="btn-sm gold" onclick="doCopyAddr()">📋 Copy Address</button>
+      <button class="btn-sm" onclick="closeModal('copy-addr-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── SHOW PRIVATE KEY MODAL ── -->
 <div class="modal-overlay" id="backup-modal">
   <div class="modal">
@@ -251,20 +276,33 @@ async function createWallet(){
     const data = await apiFetch('/api/wallet/new', {method:'POST'});
     if(data.address){
       myAddr = data.address;
-      $('addr-display').textContent = myAddr;
+      $('addr-display').textContent = maskAddr(myAddr);
       showDashboard();
       refresh();
     }
   } catch(e){ btn.textContent='Error – try again'; btn.disabled=false; }
 }
 
-// ── Addr copy ─────────────────────────────────────────────────────────────
-function copyAddr(){
+// ── Addr display helpers ───────────────────────────────────────────────────
+function maskAddr(addr){
+  if(!addr||addr.length<12) return addr;
+  return addr.slice(0,10)+'•'.repeat(addr.length-18)+addr.slice(-8);
+}
+
+// ── Copy address modal ────────────────────────────────────────────────────
+function openCopyAddrModal(){
+  if(!myAddr) return;
+  $('copy-addr-display').textContent = myAddr;
+  $('copy-addr-modal').classList.add('open');
+}
+
+function doCopyAddr(){
   if(!myAddr) return;
   navigator.clipboard.writeText(myAddr).then(()=>{
-    const b=document.querySelector('.btn-sm.gold');
-    const orig=b.textContent; b.textContent='✓ Copied!';
-    setTimeout(()=>b.textContent=orig,1500);
+    const el=$('copy-addr-display');
+    const orig=el.textContent; el.textContent='✓ Copied to clipboard!';
+    el.style.color='var(--green)';
+    setTimeout(()=>{ el.textContent=orig; el.style.color=''; },1800);
   });
 }
 
@@ -297,7 +335,7 @@ async function doGenerate(){
   try {
     const data = await apiFetch('/api/wallet/new',{method:'POST'});
     closeModal('new-wallet-modal');
-    if(data.address){ myAddr=data.address; $('addr-display').textContent=myAddr; refresh(); }
+    if(data.address){ myAddr=data.address; $('addr-display').textContent=maskAddr(myAddr); refresh(); }
   } catch(e){ alert('Error: '+e.message); }
 }
 
@@ -334,7 +372,7 @@ async function refresh(){
     showDashboard();
 
     myAddr=wallet.address;
-    $('addr-display').textContent=myAddr;
+    $('addr-display').textContent=maskAddr(myAddr);
     $('balance').textContent=fmt(wallet.balance);
 
     const tog=$('mine-toggle');
